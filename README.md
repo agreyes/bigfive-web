@@ -44,15 +44,7 @@ Install [Docker](https://www.docker.com/)
 docker run -d --name bigfive-web alheimsins/bigfive-web
 ```
 
-## Javascript Library
-
-Add the following script to your page: {{deployment_location}}/big5Test.js
-
-If running locally, use:
-
-```<script src="http://localhost:3000/big5Test.js"></script>```
-
-### Initializing the Javascript Library
+## Initializing the Javascript Library
 
 To add the test to your site, add the following script to your page {{deployment_location}}/big5Test.js
 
