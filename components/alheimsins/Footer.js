@@ -68,7 +68,7 @@ export default () => (
           color: #666;
           font-size: 12px;
           height: 80px;
-          display: flex;
+          display: none;
           justify-content: center;
           align-items: center;
         }

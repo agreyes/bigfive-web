@@ -16,15 +16,46 @@ const httpInstance = axios.create({
   timeout: 8000
 })
 
-const getResultFromId = async id => {
-  try {
-    const formattedId = formatId(id)
-    if (!validMongoId(formattedId)) throw new Error('Invalid id')
-    const { data } = await httpInstance.get(`/api/get/${formattedId}`)
-    const scores = calculateScore(data)
-    return getResult({scores, lang: data.lang || 'en'})
-  } catch (error) {
-    throw error
+
+
+export default class extends Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      chartWidth: 600
+    }
+    this.getWidth = this.getWidth.bind(this)
+  }
+
+  componentDidMount () {
+    window.addEventListener('resize', this.getWidth)
+    
+    this.getWidth()
+  }
+
+  componentWillUnmount () {
+    window.removeEventListener('resize', this.getWidth)
+  }
+
+  getWidth () {
+    const chartWidth = window.innerWidth * 0.85
+    this.setState({ chartWidth })
+  }
+
+  render () {
+    const { results, chartWidth } = this.state
+
+    return (
+      <Fragment>
+        <h2>Result</h2>
+        {
+          results &&
+          <Fragment>
+            <Resume data={results} chartWidth={chartWidth} />
+          </Fragment>
+        }
+      </Fragment>
+    )
   }
 }
 
@@ -44,58 +75,3 @@ const Resume = ({ data, chartWidth }) => (
     </style>
   </div>
 )
-
-export default class extends Component {
-  static async getInitialProps ({ query }) {
-    if (query.id) {
-      const results = await getResultFromId(query.id)
-      return { results }
-    }
-    return {}
-  }
-
-  constructor (props) {
-    super(props)
-    this.state = {
-      chartWidth: 600
-    }
-    this.getWidth = this.getWidth.bind(this)
-  }
-
-  componentDidMount () {
-    window.addEventListener('resize', this.getWidth)
-    if (this.props.results) {
-      this.setState({ results: this.props.results })
-    }
-    this.getWidth()
-  }
-
-  componentWillUnmount () {
-    window.removeEventListener('resize', this.getWidth)
-  }
-
-  getWidth () {
-    const chartWidth = window.innerWidth * 0.85
-    this.setState({ chartWidth })
-  }
-
-  render () {
-    const { results, chartWidth } = this.state
-    const { id } = this.props.query
-    const currentUrl = URL + '/result/' + id
-    return (
-      <Fragment>
-        <h2>Result</h2>
-        {
-          results &&
-          <Fragment>
-            <SocialShare url={currentUrl} />
-            { id && <Fragment>Save the following ID to see the results later or compare yourself to others - <Code>{ id }</Code></Fragment> }
-            <Resume data={results} chartWidth={chartWidth} />
-            <SocialShare url={currentUrl} />
-          </Fragment>
-        }
-      </Fragment>
-    )
-  }
-}

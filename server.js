@@ -10,8 +10,12 @@ const requestCountry = require('request-country')
 const config = require('./config')
 const validMongoId = require('./lib/valid-mongoid')
 const { join } = require('path')
+const frameguard = require('frameguard')
+const calculateScore = require('b5-calculate-score')
+const getResult = require('@alheimsins/b5-result-text')
 
 const app = next({ dev })
+
 const handler = routes.getRequestHandler(app)
 const port = parseInt(process.env.PORT, 10) || 3000
 const express = require('express')
@@ -27,18 +31,35 @@ app.prepare().then(() => {
     privateIpCountry: 'en'
   }))
 
+  server.use(frameguard({
+    action: 'allow-from',
+    domain: '*',
+    frameguard: false
+  }))
+
   server.get('/sitemap.xml', (req, res) => {
     const filePath = join(__dirname, 'static', 'sitemap.xml')
+    return app.serveStatic(req, res, filePath)
+  })
+
+  server.get('/big5Test.js', (req, res) => {
+    const filePath = join(__dirname, 'static', 'big5Test.js')
+    return app.serveStatic(req, res, filePath)
+  })
+
+  server.get('/example.html', (req, res) => {
+    const filePath = join(__dirname, 'static', 'example.html')
+    return app.serveStatic(req, res, filePath)
+  })
+
+  server.get('/test.css', (req, res) => {
+    const filePath = join(__dirname, 'static', 'test.css')
     return app.serveStatic(req, res, filePath)
   })
 
   server.get('/service-worker.js', (req, res) => {
     const filePath = join(__dirname, '.next', 'service-worker.js')
     return app.serveStatic(req, res, filePath)
-  })
-
-  server.get('/api/login', (req, res) => {
-    res.redirect('/')
   })
 
   server.get('/api/get/:id', (req, res) => {
@@ -50,13 +71,11 @@ app.prepare().then(() => {
     })
   })
 
-  server.post('/api/save', (req, res) => {
+  server.post('/api/submit', (req, res) => {
     const payload = req.body
     console.log(payload)
-    collection.insert(payload, (error, data) => {
-      if (error) throw error
-      res.send(data)
-    })
+    const scores = calculateScore(payload)
+    res.send(getResult({scores, lang: payload.lang || 'en'}))
   })
 
   server.use(handler)

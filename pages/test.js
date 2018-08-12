@@ -1,11 +1,13 @@
-import { Component } from 'react'
+import { Component, Fragment } from 'react'
 import { Router } from '../routes'
 import LanguageBar from '../components/LanguageBar'
 import { Button, ProgressBar, RadioGroup, Radio, Timer } from '../components/alheimsins'
 import getConfig from 'next/config'
+import Summary from '../components/Summary'
+import Domain from '../components/Domain'
 import axios from 'axios'
-import { FaInfoCircle } from 'react-icons/lib/fa'
-import { populateData, restoreData, getProgress, clearItems, setItem } from '../lib/localStorageStore'
+import { FaInfoCircle } from 'react-icons/fa'
+import { populateData, restoreData, getProgress, clearItems, setItem, sendMessage, loadStyleSheet } from '../lib/localStorageStore'
 const { publicRuntimeConfig } = getConfig()
 const httpInstance = axios.create({
   baseURL: publicRuntimeConfig.URL,
@@ -24,6 +26,7 @@ export default class extends Component {
 
   constructor (props) {
     super(props)
+    
     this.state = {
       progress: 0,
       position: 0,
@@ -33,13 +36,16 @@ export default class extends Component {
       answers: [],
       items: [],
       now: Date.now(),
-      lang: this.props.lang
+      lang: this.props.lang,
+      chartWidth: 600
     }
     this.handleChange = this.handleChange.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
     this.handleBack = this.handleBack.bind(this)
     this.switchLanguage = this.switchLanguage.bind(this)
     this.clearAnswers = this.clearAnswers.bind(this)
+    this.getWidth = this.getWidth.bind(this)
+    this.processMesssage = this.processMesssage.bind(this)
   }
 
   componentDidMount () {
@@ -86,6 +92,54 @@ export default class extends Component {
     this.setState({ items, position, next: true, previous })
   }
 
+  componentDidMount () {
+    window.addEventListener('resize', this.getWidth)
+    window.addEventListener('message', this.processMesssage)
+    
+    this.getWidth()
+  }
+
+  componentWillUnmount () {
+    window.removeEventListener('resize', this.getWidth)
+  }
+
+  processMesssage(e){
+    var message = e.data["event"]
+    var data = e.data["data"]
+    switch(message){
+      case "style":
+        loadStyleSheet(data)
+        break;
+      case "init":
+        if(!data){
+          this.setState(getItems(this.state.position, this.state.itemsPerPage, this.state.inventory).current())
+        }else{
+          populateData(data);
+          if(getProgress()){
+            this.setState({ ...restoreData(), itemsPerPage: window.innerWidth < 600 ? 1 : 4 })
+          }
+        }
+        sendMessage("loaded");
+        break;
+    }
+
+    if(!window.iFrameHeight){
+      window.setInterval(function(){
+        var iFrameHeight = document.body.scrollHeight;
+        if(iFrameHeight != window.iFrameHeight){
+          window.iFrameHeight = iFrameHeight;
+          sendMessage("resize", { height: window.iFrameHeight, width: document.body.scrollWidth });
+        }
+      }, 100)
+    }
+
+  }
+
+  getWidth () {
+    const chartWidth = window.innerWidth * 0.85
+    this.setState({ chartWidth })
+  }
+
   async handleSubmit () {
     window.scrollTo(0, 0)
     const { items, finished, position } = getItems(this.state.position, this.state.itemsPerPage, this.state.inventory).next()
@@ -107,9 +161,9 @@ export default class extends Component {
         answers: choices
       }
       try {
-        const { data } = await httpInstance.post('/api/save', result)
-        setItem('result', data._id)
-        Router.pushRoute('showResult', { id: data._id })
+        const { data } = await httpInstance.post('/api/submit', result)
+        populateData({ progress: this.state.progress, answers: this.state.answers, position, items, results: data })
+        this.setState({results: data})
       } catch (error) {
         throw error
       }
@@ -121,10 +175,14 @@ export default class extends Component {
   }
 
   render () {
-    const { items, progress, answers, next, previous, lang, now, restore } = this.state
+    const { items, progress, answers, next, previous, lang, now, restore, results, chartWidth } = this.state
     const done = progress === 100 && next
     const { handleChange, handleSubmit, handleBack, switchLanguage } = this
     return (
+      results.length && <Fragment>
+        <h2>Result</h2>
+        <Resume data={results} chartWidth={chartWidth} />
+      </Fragment> || <Fragment>
       <div style={{ textAlign: 'left' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <LanguageBar switchLanguage={switchLanguage} selectedLanguage={lang} />
@@ -134,7 +192,7 @@ export default class extends Component {
         </div>
         <ProgressBar progress={progress} />
         {
-          restore && <p onClick={this.clearAnswers} style={{ color: '#FF0080', marginTop: '10px', cursor: 'pointer' }}><FaInfoCircle /> Your state is restored from LocalStorage. Click here to start over again.</p>
+          false && <p onClick={this.clearAnswers} style={{ color: '#FF0080', marginTop: '10px', cursor: 'pointer' }}><FaInfoCircle /> Your state is restored from LocalStorage. Click here to start over again.</p>
         }
         { items.map(item =>
           <div key={item.id} className='item'>
@@ -171,7 +229,24 @@ export default class extends Component {
             }
           `}
         </style>
-      </div>
+      </div></Fragment>
     )
   }
 }
+
+const Resume = ({ data, chartWidth }) => (
+  <div>
+    {data && <div className='domains'><Summary data={data} vAxis={{minValue: 0, maxValue: 120}} chartWidth={chartWidth} /></div>}
+    {data && data.map((domain, index) => <Domain data={domain} key={index} chartWidth={chartWidth} />)}
+    <style jsx>
+      {`
+        .domains {
+          box-shadow: 0 2px 2px 0 rgba(0,0,0,.16), 0 0 2px 0 rgba(0,0,0,.12);
+          margin-top: 10px;
+          padding: 10px;
+          text-align: left;
+        }
+      `}
+    </style>
+  </div>
+)

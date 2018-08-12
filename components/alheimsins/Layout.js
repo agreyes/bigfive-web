@@ -5,14 +5,13 @@ import Footer from './Footer'
 export default ({ user, children }) => (
   <div className='container'>
     <Head>
-      <title>Free open-source BigFive personality traits test - translated to multiple languages</title>
+      <title>BigFive personality traits test</title>
       <meta name='viewport' content='initial-scale=0.8, maximum-scale=0.8, width=device-width' />
       <meta property='og:title' content='Want to take a free Big Five personality test?' />
       <meta property='og:description' content='Take a free, open-source Big Five personality test - translated to multiple languages. Get to know yourself better from a detailed profile of your personality traits or learn to know others by comparing yourself with your partner, colleagues, friends or family.' />
       <meta property='og:image' content='/static/apple-icon-152x152.png' />
       <meta name='theme-color' content='#000000' />
       <meta name='twitter:card' content='summary' />
-      <meta name='twitter:creator' content='@maccyber' />
       <meta name='twitter:title' content='Want to take a free Big Five personality test?' />
       <meta name='twitter:description' content='Get to know yourself better from a detailed profile of your personality traits or learn to know others by comparing yourself with your partner, colleagues, friends or family.' />
       <meta name='twitter:image' content='https://bigfive-test.com/static/apple-icon.png' />
@@ -24,11 +23,9 @@ export default ({ user, children }) => (
       <link rel='shortcut icon' href='/static/favicon.ico' />
       <link rel='manifest' href='/static/manifest.json' />
     </Head>
-    <Header user={user} />
     <div className='main'>
       {children}
     </div>
-    <Footer />
     <style jsx global>
       {`
         body {
