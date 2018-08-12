@@ -3,7 +3,7 @@
 
 # bigfive-web
 
-Website for five factor model of personality based on work from [IPIP-NEO-PI](https://github.com/kholia/IPIP-NEO-PI).
+Iframe and Javascript library wrapper for five factor model of personality based on work from [Alheimsins](hhttps://github.com/Alheimsins/bigfive-web).
 
 Tests and evaluation is gathered from [ipip.ori.org](http://ipip.ori.org).
 
@@ -20,7 +20,7 @@ Written in [nodejs](https://nodejs.org) using the [next.js](https://github.com/z
 Download and install [nodejs](https://nodejs.org) and [git](https://git-scm.com/downloads)
 
 ```sh
-git clone https://github.com/Alheimsins/bigfive-web
+git clone https://github.com/agreyes/bigfive-web
 cd bigfive-web
 npm install
 vim config.js # Edit config
@@ -31,7 +31,7 @@ Open web-browser at http://localhost:3000
 ## Deploy using [Now](https://zeit.co/now)
 
 ```sh
-$ wget https://raw.githubusercontent.com/Alheimsins/bigfive-web/master/production.env
+$ wget https://raw.githubusercontent.com/agreyes/bigfive-web/master/production.env
 $ vim production.env # Edit config
 $ now -E production.env https://github.com/Alheimsins/bigfive-web
 ```
